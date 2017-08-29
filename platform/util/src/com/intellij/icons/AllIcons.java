@@ -62,6 +62,8 @@ public class AllIcons {
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.png"); // 16x16
     public static final Icon DiffPreview = IconLoader.getIcon("/actions/diffPreview.png"); // 16x16
     public static final Icon DiffWithClipboard = IconLoader.getIcon("/actions/diffWithClipboard.png"); // 16x16
+    public static final Icon DiffWithClipboardForceLight = IconLoader.getIcon("/actions/diffWithClipboardForceLight.png"); // 16x16
+    public static final Icon DiffWithClipboardForceDark = IconLoader.getIcon("/actions/diffWithClipboardForceDark.png"); // 16x16
     public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diffWithCurrent.png"); // 16x16
     public static final Icon Down = IconLoader.getIcon("/actions/down.png"); // 16x16
     public static final Icon Download = IconLoader.getIcon("/actions/download.png"); // 16x16

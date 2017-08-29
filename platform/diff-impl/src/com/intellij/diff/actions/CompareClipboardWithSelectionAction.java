@@ -25,6 +25,8 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
@@ -36,10 +38,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.ui.mac.foundation.Foundation.*;
 
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
@@ -125,5 +131,27 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     }
 
     return title;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      setMenuIcon(e);
+    }
+  }
+
+  private void setMenuIcon(@NotNull AnActionEvent e) {
+    if (SystemInfo.isMac) {
+      ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
+      invoke(defaults, "synchronize");
+      ID behavior = invoke(defaults, "stringForKey:", nsString("AppleInterfaceStyle"));
+      if (behavior.intValue() > 0 && toStringViaUTF8(behavior).equals("Dark")) {
+        e.getPresentation().setIcon(AllIcons.Actions.DiffWithClipboardForceDark);
+      } else {
+        e.getPresentation().setIcon(AllIcons.Actions.DiffWithClipboardForceLight);
+      }
+    }
   }
 }
