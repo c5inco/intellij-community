@@ -103,16 +103,35 @@ public fun BasicTableLayout(
                 // We have enough room for all columns, use intrinsic column sizes
                 tableWidth = minTableIntrinsicWidth
             } else {
-                // We can't fit all columns in the available width; set their size proportionally
-                // to the intrinsic width, so they all fit within the available horizontal space
-                val scaleRatio = availableWidth.toFloat() / minTableIntrinsicWidth
+                // We can't fit all columns in the available width. Columns whose
+                // intrinsic width is at or below the equal-share width are "narrow" and
+                // are locked at their intrinsic size so they're never squeezed. The
+                // remaining "wide" columns share whatever space is left, scaled
+                // proportionally to their intrinsic widths.
+                val availableContentWidth = availableWidth - totalHorizontalBordersWidth
+                val equalShareWidth = availableContentWidth / columnCount
+
+                var lockedWidth = 0
+                var unlockedIntrinsicWidth = 0
                 for (i in 0 until columnCount) {
-                    // By truncating the decimal side, we may end up a few pixels short than the
-                    // available width, but at least we're never exceeding it.
-                    intrinsicColumnWidths[i] = (intrinsicColumnWidths[i] * scaleRatio).toInt()
-                    tableWidth += intrinsicColumnWidths[i]
+                    if (intrinsicColumnWidths[i] <= equalShareWidth) {
+                        lockedWidth += intrinsicColumnWidths[i]
+                    } else {
+                        unlockedIntrinsicWidth += intrinsicColumnWidths[i]
+                    }
                 }
-                tableWidth += totalHorizontalBordersWidth
+
+                val remainingWidth = availableContentWidth - lockedWidth
+                if (unlockedIntrinsicWidth > 0 && remainingWidth > 0) {
+                    val scaleRatio = remainingWidth.toFloat() / unlockedIntrinsicWidth
+                    for (i in 0 until columnCount) {
+                        if (intrinsicColumnWidths[i] > equalShareWidth) {
+                            intrinsicColumnWidths[i] = (intrinsicColumnWidths[i] * scaleRatio).toInt()
+                        }
+                    }
+                }
+
+                tableWidth = intrinsicColumnWidths.sum() + totalHorizontalBordersWidth
             }
             columnWidths = intrinsicColumnWidths.toList()
 

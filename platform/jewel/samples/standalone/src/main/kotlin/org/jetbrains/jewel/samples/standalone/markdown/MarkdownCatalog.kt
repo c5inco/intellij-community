@@ -379,6 +379,17 @@ Markdown | Less | Pretty
 *Still* | `renders` | **nicely**
 1 | 2 | 3
 
+When the table is too wide to fit the available width, earlier (narrower) columns keep their
+full intrinsic width and later columns are scaled down proportionally — so a narrow index
+column is never squeezed at the expense of wide content columns. Resize the window to see
+this in action:
+
+| # | Finding | Severity |
+|---|---------|----------|
+| 1 | Core fix is correct. `knowledgeSelection is KnowledgeSelection.None` is the right predicate — symmetric with how `selectedPlanPath` already gated session highlighting. The parameter was already present in `AgentSidebar` so no new plumbing was needed beyond threading it one level deeper. | Low |
+| 2 | No unit test for the `isActive` fix. The three-way conjunction (`selectedPlanPath == null && knowledgeSelection is KnowledgeSelection.None && session.id == activeSessionId`) could silently regress if a future refactor drops the `knowledgeSelection` guard. There are currently zero tests for `SessionsSection`. | Medium |
+| 3 | Pre-existing dirty files should be addressed separately before this work is considered fully clean. | Info |
+
 <a name="blockquotes"></a>
 ## Blockquotes
 
