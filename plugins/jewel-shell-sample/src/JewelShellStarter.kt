@@ -36,12 +36,21 @@ internal class JewelShellStarter : IdeStarter() {
     // args[0] is the "jewelShell" command itself; the rest are files to open
     val filePaths = args.drop(1).mapNotNull { runCatching { Path.of(it).toAbsolutePath() }.getOrNull() }
 
-    withContext(Dispatchers.EDT) {
-      val window = JewelShellWindow(project)
-      window.show()
-      for (path in filePaths) {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)?.let(window::openFile)
-      }
+    // Resolve the VFS entries before touching the EDT: refreshAndFindFileByNioFile walks (and may
+    // refresh) the persistent VFS, which is exactly the kind of blocking I/O SlowOperations forbids
+    // on the EDT. Same shape as DynamicPluginVfsListener and NavigatorWithinProject.
+    val files = withContext(Dispatchers.IO) {
+      filePaths.mapNotNull { LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it) }
+    }
+
+    val window = withContext(Dispatchers.EDT) {
+      JewelShellWindow(project, coroutineScope).also { it.show() }
+    }
+
+    // openFile suspends: it loads the document and builds the highlighter off the EDT, then hops
+    // onto it only to construct the editor.
+    for (file in files) {
+      window.openFile(file)
     }
   }
 }

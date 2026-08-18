@@ -80,6 +80,12 @@ and is already applied:
   is not available` lines under `PluginManager - Plugin set resolution:`.
 - **An `IdeGlassPaneImpl` installed on the shell window's root pane** (in the sample) — platform
   components hosted outside the standard IDE shell still look one up via `IdeGlassPaneUtil`.
+- **File opening moved off the EDT** (in the sample) — VFS resolution, document loading and highlighter
+  construction were running on the EDT and tripped `SlowOperations`. See
+  [the sample README](../plugins/jewel-shell-sample/README.md#keeping-the-slow-work-off-the-edt).
+  Restructuring that exposed a latent Compose layout bug: the shell window now forces a layout pass
+  once it is showing, without which the toolbar's right-aligned controls were measured against the
+  Compose panel's unbounded preferred width and landed off screen.
 
 Startup is now clean: `Loaded bundled plugins: IDEA CORE, Jewel Shell Sample`, with no plugin problems.
 

@@ -4,10 +4,16 @@ package com.intellij.jewelShellSample
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -15,6 +21,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.ui.OnePixelSplitter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
 import java.awt.BorderLayout
 import java.awt.CardLayout
@@ -32,7 +42,10 @@ import javax.swing.JPanel
  * Compose and Swing share the AWT EDT, so the Compose snapshot state below may be mutated directly
  * from Swing/IDE callbacks, and Compose click handlers may call Swing code directly.
  */
-internal class JewelShellWindow(private val project: Project) {
+internal class JewelShellWindow(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) {
   private val openFiles = mutableStateListOf<VirtualFile>()
   private val selectedFile = mutableStateOf<VirtualFile?>(null)
   private val editors = LinkedHashMap<VirtualFile, Editor>()
@@ -77,24 +90,62 @@ internal class JewelShellWindow(private val project: Project) {
         override fun windowClosing(e: WindowEvent) = exit()
       })
       isVisible = true
+
+      // The Compose panels measure themselves when they are first realized, which can happen before
+      // the frame has its final bounds — the content then gets laid out against the panel's
+      // effectively unbounded preferred width (16383) instead of the real one, and everything the
+      // toolbar places after its Spacer(weight(1f)) (the file path and the buttons) ends up far off
+      // screen. Invalidating once the frame is showing forces one more layout pass at the real width.
+      contentPane.invalidate()
+      validate()
+      repaint()
     }
   }
 
-  fun openFile(file: VirtualFile) {
+  /**
+   * Opens [file] in a real platform editor, following the sequence `PsiAwareTextEditorProvider` uses:
+   * everything expensive — reading the document text and building the syntax highlighter — happens off
+   * the EDT under a read lock, and the EDT is entered only to construct the editor, which `EditorImpl`
+   * requires (`EditorImpl.assertIsDispatchThread`).
+   *
+   * Doing this work on the EDT instead trips `SlowOperations.assertSlowOperationsAreAllowed`:
+   * `getDocument` reads file contents through the VFS, and `createEditorHighlighter` resolves the file
+   * type, which can block on things like TextMate bundle initialization.
+   */
+  suspend fun openFile(file: VirtualFile) {
     if (file.isDirectory) return
     if (file !in editors) {
-      val document = FileDocumentManager.getInstance().getDocument(file) ?: return
-      val editor = EditorFactory.getInstance().createEditor(document, project, file, false) as EditorEx
-      editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
-      editor.settings.apply {
-        isLineNumbersShown = true
-        isFoldingOutlineShown = true
+      val fileDocumentManager = serviceAsync<FileDocumentManager>()
+      val document = readAction { fileDocumentManager.getDocument(file) } ?: return
+
+      val colorScheme = serviceAsync<EditorColorsManager>().globalScheme
+      val highlighterFactory = serviceAsync<EditorHighlighterFactory>()
+      val highlighter = readActionBlocking {
+        highlighterFactory.createEditorHighlighter(file, colorScheme, project)
       }
-      editors[file] = editor
-      editorHost.add(editor.component, file.url)
-      openFiles.add(file)
+      // Priming the highlighter here keeps the lexing off the EDT; setHighlighter would
+      // otherwise do it during editor construction.
+      highlighter.setText(document.immutableCharSequence)
+
+      withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+          // createMainEditor is the only entry point that accepts a pre-built highlighter. The public
+          // createEditor(document, project, file, isViewer) overload builds one itself, on the calling
+          // thread, which would put the work we just moved off the EDT straight back onto it.
+          // @ApiStatus.Internal, like the LightEditServiceImpl cast in JewelShellStarter.
+          val editor = (EditorFactory.getInstance() as EditorFactoryImpl)
+            .createMainEditor(document, project, file, highlighter, null)
+          editor.settings.apply {
+            isLineNumbersShown = true
+            isFoldingOutlineShown = true
+          }
+          editors[file] = editor
+          editorHost.add(editor.component, file.url)
+          openFiles.add(file)
+        }
+      }
     }
-    selectFile(file)
+    withContext(Dispatchers.EDT) { selectFile(file) }
   }
 
   private fun selectFile(file: VirtualFile) {
@@ -104,8 +155,11 @@ internal class JewelShellWindow(private val project: Project) {
   }
 
   private fun chooseAndOpenFile() {
-    FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileDescriptor(), project, null)
-      ?.let(::openFile)
+    // The chooser is modal and must run on the EDT (this is a Compose click handler, so it already is);
+    // the open itself is suspending, so it is launched rather than awaited here.
+    val file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileDescriptor(), project, null)
+               ?: return
+    coroutineScope.launch { openFile(file) }
   }
 
   private fun saveAll() {
