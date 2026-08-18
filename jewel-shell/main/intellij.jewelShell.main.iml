@@ -5,6 +5,9 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <!-- jps-bootstrap wraps the main class in org.jetbrains.intellij.build.impl.BuildScriptLauncher
+         when running from sources, so it must be on this module's runtime classpath -->
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />

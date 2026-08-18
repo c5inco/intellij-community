@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.ui.OnePixelSplitter
 import org.jetbrains.jewel.bridge.compose
 import java.awt.BorderLayout
@@ -61,6 +62,10 @@ internal class JewelShellWindow(private val project: Project) {
     }
 
     with(frame) {
+      // Platform components hosted outside the standard IDE shell still expect an IdeGlassPane on the
+      // root pane (OnePixelDivider, editor drag handling, and others look it up via IdeGlassPaneUtil).
+      // IdeFrameImpl installs one; this window has to do it itself.
+      rootPane.glassPane = IdeGlassPaneImpl(rootPane).also { it.isVisible = true }
       contentPane.layout = BorderLayout()
       contentPane.add(toolbar, BorderLayout.NORTH)
       contentPane.add(splitter, BorderLayout.CENTER)

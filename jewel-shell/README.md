@@ -36,6 +36,23 @@ full IDEA with the `jewelShell` argument), this one builds only the closure of
 `intellij.jewelShell.main` — the platform without the language plugins — and uses the `JewelShell`
 platform prefix, own config/system dirs.
 
+From the command line, the same thing via jps-bootstrap. The `-D` options are not optional: without
+`idea.platform.prefix` the platform falls back to `IdeaApplicationInfo.xml` and fails with
+`EssentialPluginMissingException: Missing essential plugins: com.intellij.java, ...`, because it is
+loading IDEA's product definition rather than this one.
+
+```bash
+./platform/jps-bootstrap/jps-bootstrap.sh \
+  -Didea.platform.prefix=JewelShell \
+  -Djava.awt.headless=false \
+  -Didea.config.path="$PWD/config/jewelshell" \
+  -Didea.system.path="$PWD/system/jewelshell" \
+  . intellij.jewelShell.main com.intellij.idea.Main jewelShell [file ...]
+```
+
+Trailing arguments after `jewelShell` are opened in the shell's editors on startup, which is the
+quickest way to exercise the real-editor path without going through the file chooser.
+
 ## Building distributions
 
 Run `JewelShellInstallersBuildTarget.main()` (module `intellij.jewelShell.build`). It compiles the
@@ -44,12 +61,31 @@ signing steps are skipped; per-OS installer customizers (`.ico`/`.icns`/installe
 `null`/default and should be filled in with real brand assets — model them on
 `communityWindowsCustomizer` & co. in `IdeaCommunityProperties.kt`.
 
-## Expected shake-out
+## Shake-out — resolved
 
-This scaffolding is structurally faithful to the in-repo product templates but has not been built in CI:
+The scaffolding has now been built and launched from sources; the following was needed to get there,
+and is already applied:
 
-- The hand-written `JewelShellPlugin.xml` may need a few more content modules or aliases once the
-  platform validates it at startup (missing `required` content modules are named in the error).
-- `essential-plugin` entries, file associations, and update channels are intentionally omitted.
+- **`intellij.platform.projectModel`** added to `intellij.jewelShellSample` — `LightEditServiceImpl`'s
+  supertype `PersistentStateComponent` lives there, so the module did not compile without it.
+- **`intellij.platform.buildScripts.downloader`** added (runtime) to `intellij.jewelShell.main` —
+  jps-bootstrap always wraps the requested main class in
+  `org.jetbrains.intellij.build.impl.BuildScriptLauncher`, which must be on the run module's classpath.
+- **Two content modules added to `JewelShellPlugin.xml`.** As anticipated, the composed
+  sets were not self-contained: `essential.minimal` is a smaller tier than the `ide.common`/`essential`
+  tiers most products compose from, so `intellij.libraries.jspecify` (required by
+  `intellij.libraries.compose.runtime.desktop`, and therefore by all of Jewel) and
+  `intellij.platform.scopes` (required by `intellij.platform.searchEverywhere`) had to be listed
+  explicitly. The startup log names these precisely, as `Module X is not enabled because dependency Y
+  is not available` lines under `PluginManager - Plugin set resolution:`.
+- **An `IdeGlassPaneImpl` installed on the shell window's root pane** (in the sample) — platform
+  components hosted outside the standard IDE shell still look one up via `IdeGlassPaneUtil`.
+
+Startup is now clean: `Loaded bundled plugins: IDEA CORE, Jewel Shell Sample`, with no plugin problems.
+
+Still intentionally unaddressed:
+
+- `essential-plugin` entries, file associations, and update channels are omitted.
 - The distribution layout (`productLayout.addPlatformSpec`) may need additions the first time
-  `JewelShellInstallersBuildTarget` runs — MPSProperties shows the typical adjustments.
+  `JewelShellInstallersBuildTarget` runs — MPSProperties shows the typical adjustments. Only the
+  run-from-sources path has been exercised so far.

@@ -9,4 +9,16 @@
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.essential.minimal.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.compose.xml"/>
+
+  <!-- Modules that the sets above depend on but do not themselves contain. The "essential.minimal"
+       tier is smaller than the "ide.common"/"essential" tiers most products compose, so a few
+       dependencies of the compose set (and of the platform modules it drags in) have to be listed
+       explicitly here. Each one is loaded exactly as it is declared in the generated set that owns
+       it, so the layout stays consistent with the larger products. -->
+  <content namespace="jetbrains">
+    <!-- required by intellij.libraries.compose.runtime.desktop (from intellij.moduleSets.ide.common) -->
+    <module name="intellij.libraries.jspecify"/>
+    <!-- required by intellij.platform.searchEverywhere (from intellij.moduleSets.essential) -->
+    <module name="intellij.platform.scopes" loading="embedded"/>
+  </content>
 </idea-plugin>
