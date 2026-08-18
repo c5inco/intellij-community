@@ -1,0 +1,12 @@
+<!-- Core plugin descriptor for the JewelShell product (platform prefix "JewelShell").
+     Hand-written in the style of the generated product descriptors (cf. IdeaPlugin.xml,
+     PyCharmCorePlugin.xml), composed from the committed generated module-set XMLs.
+     JewelShell deliberately opts out of the Product DSL generator (like MPS does):
+     JewelShellProperties.getProductContentDescriptor() returns null. -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.jewelshell"/>
+
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.essential.minimal.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.compose.xml"/>
+</idea-plugin>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jewelShell.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jewelShellSample" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.textmate" scope="RUNTIME" />
+  </component>
+</module>

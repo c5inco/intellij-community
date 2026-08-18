@@ -1,0 +1,9 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="2" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
+  <build number="JS-__BUILD__" date="__BUILD_DATE__"/>
+  <logo url="/idea_community_logo.png"/>
+  <icon svg="/jewel-shell.svg" svg-small="/jewel-shell_16.svg"/>
+  <names product="JewelShell" fullname="Jewel Shell" script="jewelshell" motto="IntelliJ Platform, remixed UI"/>
+  <plugins url="https://plugins.jetbrains.com/"/>
+</component>

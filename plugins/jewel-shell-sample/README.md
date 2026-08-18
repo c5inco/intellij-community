@@ -52,7 +52,9 @@ This is a deliberately small spike, not a product:
 
 - Define a dedicated product (`ProductProperties` + `corePlatform()`/`essentialMinimal()` module sets)
   instead of piggybacking on IDEA, and add the Jewel standalone/decorated-window modules for a fully
-  Compose-drawn title bar.
+  Compose-drawn title bar. **See [`jewel-shell/`](../../jewel-shell/README.md) for exactly this** — a
+  standalone JewelShell product definition that bundles this plugin and boots straight into the Jewel
+  shell.
 - Replace `ToolWindowManager` (the one shell service registered `open="true"`) to route tool-window
   content into Jewel surfaces.
 - Host editors via a custom `FileEditorManagerEx` so the daemon, completion, and navigation are fully
