@@ -1,0 +1,21 @@
+<idea-plugin package="com.intellij.jewelShellSample">
+  <id>com.intellij.jewelShellSample</id>
+  <name>Jewel Shell Sample</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Sample of running the IntelliJ Platform under a custom UI shell rendered with Jewel (Compose for Desktop).
+    Modeled on the LightEdit implementation: a custom ApplicationStarter boots the full platform without ever
+    constructing the standard IDE frame, and shows a Jewel-rendered window that hosts real platform editors
+    as Swing islands. Start the IDE with the "jewelShell" command-line argument to activate it.
+  ]]></description>
+
+  <dependencies>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter id="jewelShell" implementation="com.intellij.jewelShellSample.JewelShellStarter"/>
+  </extensions>
+</idea-plugin>

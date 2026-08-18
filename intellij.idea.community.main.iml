@@ -69,6 +69,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.dev.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.plugin.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jewelShellSample" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="RUNTIME" />
